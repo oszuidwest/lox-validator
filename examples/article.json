@@ -1,0 +1,68 @@
+{
+	"externalId": "artikel-123456",
+	"metadata": {
+		"publicationStatus": "published",
+		"locale": "nl",
+		"timestamps": {
+			"publishedAt": "2026-11-07T09:30:00+01:00",
+			"updatedAt": "2026-11-07T10:05:00+01:00"
+		},
+		"canonicalUrl": "https://www.example.nl/nieuws/123456/nieuwe-brug-open/",
+		"authors": [{ "name": "Redactie" }],
+		"classifications": [{ "dimension": "location", "label": "Roosendaal" }]
+	},
+	"title": "Nieuwe brug over het kanaal open",
+	"summary": "Na twee jaar bouwen kunnen fietsers vanaf vandaag over de nieuwe brug.",
+	"hero": { "ref": "brug-opening.jpg", "caption": "De brug bij de opening" },
+	"body": [
+		{
+			"type": "paragraph",
+			"content": [
+				{ "type": "text", "text": "De brug is " },
+				{ "type": "text", "text": "vanaf vandaag", "marks": ["bold"] },
+				{ "type": "text", "text": " open. Lees ook " },
+				{
+					"type": "link",
+					"href": "https://www.example.nl/nieuws/100000/bouw-brug-start/",
+					"children": [{ "type": "text", "text": "het eerdere bericht" }]
+				},
+				{ "type": "text", "text": "." }
+			]
+		},
+		{ "type": "heading", "level": 2, "text": "Wat verandert er?" },
+		{
+			"type": "list",
+			"style": "unordered",
+			"items": [
+				[{ "type": "text", "text": "Fietsers rijden niet meer om." }],
+				[{ "type": "text", "text": "De pont stopt." }]
+			]
+		},
+		{
+			"type": "quote",
+			"content": [
+				{ "type": "text", "text": "Hier hebben we lang op gewacht." }
+			],
+			"attribution": "Een omwonende"
+		},
+		{
+			"type": "embed",
+			"url": "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+			"provider": "YouTube"
+		}
+	],
+	"media": [
+		{
+			"ref": "brug-opening.jpg",
+			"kind": "image",
+			"mimeType": "image/jpeg",
+			"credit": "Foto: Redactie",
+			"width": 1920,
+			"height": 1080,
+			"delivery": {
+				"method": "url",
+				"url": "https://www.example.nl/media/brug-opening.jpg"
+			}
+		}
+	]
+}

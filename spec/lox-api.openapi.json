@@ -1,0 +1,1514 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/article": {
+      "post": {
+        "operationId": "ArticleController_submit_v1",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "description": "TEMPORARY tenant selector until token-derived tenancy exists.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArticleSubmission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Content identical to the current version; nothing changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleSubmissionResponseDto"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "A new article version was stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleSubmissionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The tenant header is missing, malformed or unknown, or the article does not match the LOX v1 format.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The article version could not be allocated; retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Submit an article in the LOX v1 format",
+        "tags": ["Article"]
+      }
+    },
+    "/api/v1/article/{externalId}": {
+      "get": {
+        "operationId": "ArticleController_getCurrent_v1",
+        "parameters": [
+          {
+            "name": "externalId",
+            "required": true,
+            "in": "path",
+            "description": "Broadcaster article id, percent-encoded as one path segment (a `/` becomes `%2F`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "description": "TEMPORARY tenant selector until token-derived tenancy exists.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The highest version of the article, whatever its status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleStatusResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The tenant header is missing, malformed or unknown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such article version for this tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get the status of the current version of an article",
+        "tags": ["Article"]
+      }
+    },
+    "/api/v1/article/{externalId}/versions/{id}": {
+      "get": {
+        "operationId": "ArticleController_getVersion_v1",
+        "parameters": [
+          {
+            "name": "externalId",
+            "required": true,
+            "in": "path",
+            "description": "Broadcaster article id, percent-encoded as one path segment (a `/` becomes `%2F`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Article version id from the submission.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "description": "TEMPORARY tenant selector until token-derived tenancy exists.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested version, also when a newer one is current.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArticleStatusResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The tenant header is missing, malformed or unknown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such article version for this tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get the status of one article version, as linked by `statusUrl`",
+        "tags": ["Article"]
+      }
+    },
+    "/api/v1/media-item/{ref}/upload": {
+      "post": {
+        "description": "Returns one presigned URL per part. PUT each part (`partSizeBytes` long, except the last), then call `/complete`. Call again to get fresh URLs for an unfinished upload.",
+        "operationId": "MediaItemController_initiate_v1",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "description": "TEMPORARY tenant selector until token-derived tenancy exists.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Presigned URLs to upload the media parts to.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitiateUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The tenant header is missing, malformed or unknown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown media item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The media item does not accept an upload right now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The declared media size is too large to upload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Media storage is not available. Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Start or resume a media upload",
+        "tags": ["Media"]
+      }
+    },
+    "/api/v1/media-item/complete": {
+      "post": {
+        "description": "Assembles the uploaded parts and compares the uploaded size with the declared size. The media item becomes `ready` on a match and `failed` otherwise. Repeating a successful call returns the same answer.",
+        "operationId": "MediaItemController_complete_v1",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "description": "TEMPORARY tenant selector until token-derived tenancy exists.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteUploadRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The media item is ready.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The tenant header or the request body is missing, malformed or unknown.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown upload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The upload is not active for this media item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The uploaded size differs from the declared size, or parts are missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Media storage is not available. Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Complete a media upload",
+        "tags": ["Media"]
+      }
+    }
+  },
+  "info": {
+    "title": "LOX Broadcaster Push API",
+    "description": "",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "https://api.lox.nl",
+      "description": "Production"
+    },
+    {
+      "url": "https://sandbox.api.lox.nl",
+      "description": "Sandbox"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "TextRunDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": ["text", "link", "lineBreak"],
+            "type": "string",
+            "description": "Inline kind."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100000,
+            "description": "Run text."
+          },
+          "marks": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "bold",
+                "italic",
+                "underline",
+                "strikethrough",
+                "subscript",
+                "superscript",
+                "code"
+              ]
+            },
+            "maxItems": 7,
+            "description": "Formatting marks."
+          }
+        },
+        "required": ["type", "text"]
+      },
+      "LinkDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": ["text", "link", "lineBreak"],
+            "type": "string",
+            "description": "Inline kind."
+          },
+          "href": {
+            "type": "string",
+            "description": "Link target.",
+            "maxLength": 2048,
+            "pattern": "^https?:\\/\\/",
+            "format": "uri"
+          },
+          "children": {
+            "description": "Link text.",
+            "minItems": 1,
+            "maxItems": 1000,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TextRunDto"
+            }
+          }
+        },
+        "required": ["type", "href", "children"]
+      },
+      "LineBreakDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": ["text", "link", "lineBreak"],
+            "type": "string",
+            "description": "Inline kind."
+          }
+        },
+        "required": ["type"]
+      },
+      "ParagraphBlockDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "paragraph",
+              "heading",
+              "image",
+              "video",
+              "audio",
+              "list",
+              "quote",
+              "embed"
+            ],
+            "type": "string",
+            "description": "Block kind."
+          },
+          "content": {
+            "type": "array",
+            "description": "Paragraph content.",
+            "minItems": 1,
+            "maxItems": 10000,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TextRunDto"
+                },
+                {
+                  "$ref": "#/components/schemas/LinkDto"
+                },
+                {
+                  "$ref": "#/components/schemas/LineBreakDto"
+                }
+              ]
+            }
+          }
+        },
+        "required": ["type", "content"]
+      },
+      "HeadingBlockDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "paragraph",
+              "heading",
+              "image",
+              "video",
+              "audio",
+              "list",
+              "quote",
+              "embed"
+            ],
+            "type": "string",
+            "description": "Block kind."
+          },
+          "level": {
+            "type": "number",
+            "description": "Heading level.",
+            "minimum": 2,
+            "maximum": 6
+          },
+          "text": {
+            "type": "string",
+            "description": "Heading text.",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": ["type", "level", "text"]
+      },
+      "ImageBlockDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "paragraph",
+              "heading",
+              "image",
+              "video",
+              "audio",
+              "list",
+              "quote",
+              "embed"
+            ],
+            "type": "string",
+            "description": "Block kind."
+          },
+          "ref": {
+            "type": "string",
+            "description": "Reference to a media declaration.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^(?!\\s)(?!.*\\s$)(?!\\.{1,2}$)[^/\\\\:\\p{Cc}]+$"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Caption.",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        },
+        "required": ["type", "ref"]
+      },
+      "VideoBlockDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "paragraph",
+              "heading",
+              "image",
+              "video",
+              "audio",
+              "list",
+              "quote",
+              "embed"
+            ],
+            "type": "string",
+            "description": "Block kind."
+          },
+          "ref": {
+            "type": "string",
+            "description": "Reference to a media declaration.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^(?!\\s)(?!.*\\s$)(?!\\.{1,2}$)[^/\\\\:\\p{Cc}]+$"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Caption.",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        },
+        "required": ["type", "ref"]
+      },
+      "AudioBlockDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "paragraph",
+              "heading",
+              "image",
+              "video",
+              "audio",
+              "list",
+              "quote",
+              "embed"
+            ],
+            "type": "string",
+            "description": "Block kind."
+          },
+          "ref": {
+            "type": "string",
+            "description": "Reference to a media declaration.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^(?!\\s)(?!.*\\s$)(?!\\.{1,2}$)[^/\\\\:\\p{Cc}]+$"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Caption.",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        },
+        "required": ["type", "ref"]
+      },
+      "ListBlockDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "paragraph",
+              "heading",
+              "image",
+              "video",
+              "audio",
+              "list",
+              "quote",
+              "embed"
+            ],
+            "type": "string",
+            "description": "Block kind."
+          },
+          "style": {
+            "enum": ["ordered", "unordered"],
+            "type": "string",
+            "description": "List style."
+          },
+          "items": {
+            "type": "array",
+            "description": "List items, each a rich-text array.",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/TextRunDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LinkDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/LineBreakDto"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "required": ["type", "style", "items"]
+      },
+      "QuoteBlockDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "paragraph",
+              "heading",
+              "image",
+              "video",
+              "audio",
+              "list",
+              "quote",
+              "embed"
+            ],
+            "type": "string",
+            "description": "Block kind."
+          },
+          "content": {
+            "type": "array",
+            "description": "Quote content.",
+            "minItems": 1,
+            "maxItems": 10000,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/TextRunDto"
+                },
+                {
+                  "$ref": "#/components/schemas/LinkDto"
+                },
+                {
+                  "$ref": "#/components/schemas/LineBreakDto"
+                }
+              ]
+            }
+          },
+          "attribution": {
+            "type": "string",
+            "description": "Who is quoted.",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": ["type", "content"]
+      },
+      "EmbedBlockDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "paragraph",
+              "heading",
+              "image",
+              "video",
+              "audio",
+              "list",
+              "quote",
+              "embed"
+            ],
+            "type": "string",
+            "description": "Block kind."
+          },
+          "url": {
+            "type": "string",
+            "description": "Embedded resource URL.",
+            "maxLength": 2048,
+            "pattern": "^https?:\\/\\/",
+            "format": "uri"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Embed provider.",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "title": {
+            "type": "string",
+            "description": "Embed title.",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": ["type", "url"]
+      },
+      "Md5ChecksumDto": {
+        "type": "object",
+        "properties": {
+          "algorithm": {
+            "enum": ["md5", "sha1", "sha256"],
+            "type": "string",
+            "description": "Hash algorithm."
+          },
+          "value": {
+            "type": "string",
+            "description": "Lowercase hexadecimal MD5 digest.",
+            "pattern": "^[0-9a-f]{32}$"
+          }
+        },
+        "required": ["algorithm", "value"]
+      },
+      "Sha1ChecksumDto": {
+        "type": "object",
+        "properties": {
+          "algorithm": {
+            "enum": ["md5", "sha1", "sha256"],
+            "type": "string",
+            "description": "Hash algorithm."
+          },
+          "value": {
+            "type": "string",
+            "description": "Lowercase hexadecimal SHA-1 digest.",
+            "pattern": "^[0-9a-f]{40}$"
+          }
+        },
+        "required": ["algorithm", "value"]
+      },
+      "Sha256ChecksumDto": {
+        "type": "object",
+        "properties": {
+          "algorithm": {
+            "enum": ["md5", "sha1", "sha256"],
+            "type": "string",
+            "description": "Hash algorithm."
+          },
+          "value": {
+            "type": "string",
+            "description": "Lowercase hexadecimal SHA-256 digest.",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": ["algorithm", "value"]
+      },
+      "UrlDeliveryDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "enum": ["url", "upload"],
+            "type": "string",
+            "description": "Delivery method."
+          },
+          "url": {
+            "type": "string",
+            "description": "Public URL the media is fetched from: http or https, at most 5 redirects and never from https to http. Internal addresses are refused. The served content type must equal mimeType, and a declared byteSize or checksum must match.",
+            "maxLength": 2048,
+            "pattern": "^https?:\\/\\/[^{}\\s]+$",
+            "format": "uri"
+          }
+        },
+        "required": ["method", "url"]
+      },
+      "UploadDeliveryDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "enum": ["url", "upload"],
+            "type": "string",
+            "description": "Delivery method."
+          },
+          "url": {
+            "type": "string",
+            "description": "Must be absent for upload delivery."
+          }
+        },
+        "required": ["method"]
+      },
+      "TimestampsDto": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "description": "When the article was first created in the source system.",
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "When the article was first published by the broadcaster.",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the article was last modified in the source system.",
+            "format": "date-time"
+          }
+        },
+        "required": ["updatedAt"]
+      },
+      "AuthorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Author display name.",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "role": {
+            "type": "string",
+            "description": "Role of the author.",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "affiliation": {
+            "type": "string",
+            "description": "Organisation of the author.",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "Author identity in the source system.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^\\S(?:.*\\S)?$"
+          }
+        },
+        "required": ["name"]
+      },
+      "ClassificationDto": {
+        "type": "object",
+        "properties": {
+          "dimension": {
+            "enum": [
+              "category",
+              "location",
+              "dossier",
+              "theme",
+              "topic",
+              "tag"
+            ],
+            "type": "string",
+            "description": "Classification dimension."
+          },
+          "id": {
+            "type": "string",
+            "description": "Source-system term identity.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^\\S(?:.*\\S)?$"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human readable label.",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": ["dimension", "label"]
+      },
+      "LicenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Licence identifier, such as an SPDX identifier or a broadcaster licence code.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^\\S(?:.*\\S)?$"
+          },
+          "url": {
+            "type": "string",
+            "description": "Licence text URL.",
+            "maxLength": 2048,
+            "pattern": "^https?:\\/\\/",
+            "format": "uri"
+          }
+        },
+        "required": ["id"]
+      },
+      "RightsDto": {
+        "type": "object",
+        "properties": {
+          "distribution": {
+            "enum": ["permitted", "restricted", "unknown"],
+            "type": "string",
+            "description": "Whether distribution is permitted."
+          },
+          "licence": {
+            "description": "Licence that applies to the content.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LicenceDto"
+              }
+            ]
+          },
+          "copyrightHolder": {
+            "type": "string",
+            "description": "Copyright holder.",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "copyrightNotice": {
+            "type": "string",
+            "description": "Display text such as a copyright credit. Not a licence grant.",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        }
+      },
+      "MetadataDto": {
+        "type": "object",
+        "properties": {
+          "publicationStatus": {
+            "enum": ["draft", "published", "retracted"],
+            "type": "string",
+            "description": "Publication state at the broadcaster."
+          },
+          "locale": {
+            "type": "string",
+            "description": "Article language as a BCP 47 tag.",
+            "example": "nl",
+            "maxLength": 35,
+            "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$"
+          },
+          "timestamps": {
+            "description": "Article timestamps.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimestampsDto"
+              }
+            ]
+          },
+          "canonicalUrl": {
+            "type": "string",
+            "description": "Canonical public URL of the article at the broadcaster.",
+            "maxLength": 2048,
+            "pattern": "^https?:\\/\\/",
+            "format": "uri"
+          },
+          "authors": {
+            "description": "Article authors.",
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthorDto"
+            }
+          },
+          "classifications": {
+            "description": "Categories, locations and tags.",
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassificationDto"
+            }
+          },
+          "rights": {
+            "description": "Article-level rights.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RightsDto"
+              }
+            ]
+          }
+        },
+        "required": ["publicationStatus", "locale", "timestamps"]
+      },
+      "HeroMediaDto": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Reference to a media declaration.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^(?!\\s)(?!.*\\s$)(?!\\.{1,2}$)[^/\\\\:\\p{Cc}]+$"
+          },
+          "caption": {
+            "type": "string",
+            "description": "Caption.",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        },
+        "required": ["ref"]
+      },
+      "MediaDeclarationDto": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Broadcaster-owned media identity, unique per broadcaster and stable across articles. Hero and body blocks reference media by this value.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^(?!\\s)(?!.*\\s$)(?!\\.{1,2}$)[^/\\\\:\\p{Cc}]+$"
+          },
+          "kind": {
+            "enum": ["image", "video", "audio"],
+            "type": "string",
+            "description": "Media kind."
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type.",
+            "example": "image/jpeg",
+            "maxLength": 255,
+            "pattern": "^[a-z]+\\/[a-z0-9][a-z0-9.+-]*$"
+          },
+          "title": {
+            "type": "string",
+            "description": "Media title.",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "description": {
+            "type": "string",
+            "description": "Media description.",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "credit": {
+            "type": "string",
+            "description": "Credit line.",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "width": {
+            "type": "number",
+            "description": "Width in pixels.",
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "height": {
+            "type": "number",
+            "description": "Height in pixels.",
+            "minimum": 1,
+            "maximum": 100000
+          },
+          "durationSeconds": {
+            "type": "number",
+            "description": "Duration of audio or video in whole seconds.",
+            "minimum": 1,
+            "maximum": 31536000
+          },
+          "byteSize": {
+            "type": "number",
+            "description": "Size in bytes. Required for upload delivery.",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "checksum": {
+            "description": "Content checksum. Required for upload delivery.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Md5ChecksumDto"
+              },
+              {
+                "$ref": "#/components/schemas/Sha1ChecksumDto"
+              },
+              {
+                "$ref": "#/components/schemas/Sha256ChecksumDto"
+              }
+            ]
+          },
+          "rights": {
+            "description": "Media-level rights.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RightsDto"
+              }
+            ]
+          },
+          "delivery": {
+            "description": "How the media reaches LOX.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UrlDeliveryDto"
+              },
+              {
+                "$ref": "#/components/schemas/UploadDeliveryDto"
+              }
+            ]
+          }
+        },
+        "required": ["ref", "kind", "mimeType", "delivery"]
+      },
+      "ArticleSubmission": {
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string",
+            "description": "Broadcaster-owned identity of the logical article. Stable across submissions.",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^\\S(?:.*\\S)?$"
+          },
+          "metadata": {
+            "description": "Article metadata.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MetadataDto"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "description": "Primary article title.",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "summary": {
+            "type": "string",
+            "description": "Plain-text article summary.",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "hero": {
+            "description": "Media shown as the lead of the article.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroMediaDto"
+              }
+            ]
+          },
+          "body": {
+            "type": "array",
+            "description": "Ordered article body blocks.",
+            "minItems": 1,
+            "maxItems": 2000,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ParagraphBlockDto"
+                },
+                {
+                  "$ref": "#/components/schemas/HeadingBlockDto"
+                },
+                {
+                  "$ref": "#/components/schemas/ImageBlockDto"
+                },
+                {
+                  "$ref": "#/components/schemas/VideoBlockDto"
+                },
+                {
+                  "$ref": "#/components/schemas/AudioBlockDto"
+                },
+                {
+                  "$ref": "#/components/schemas/ListBlockDto"
+                },
+                {
+                  "$ref": "#/components/schemas/QuoteBlockDto"
+                },
+                {
+                  "$ref": "#/components/schemas/EmbedBlockDto"
+                }
+              ]
+            }
+          },
+          "media": {
+            "description": "Media declarations referenced by `ref`.",
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaDeclarationDto"
+            }
+          }
+        },
+        "required": ["externalId", "metadata", "title", "body", "media"]
+      },
+      "ArticleSubmissionIssueDto": {
+        "type": "object",
+        "properties": {
+          "pointer": {
+            "type": "string",
+            "description": "JSON Pointer to the problem."
+          },
+          "code": {
+            "type": "string",
+            "description": "Machine readable issue code."
+          },
+          "detail": {
+            "type": "string",
+            "description": "Human readable explanation."
+          }
+        },
+        "required": ["pointer", "code", "detail"]
+      },
+      "ArticleSubmissionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the stored article version."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Broadcaster article id."
+          },
+          "version": {
+            "type": "number"
+          },
+          "statusUrl": {
+            "type": "string",
+            "description": "Relative URL to poll for the version status."
+          },
+          "status": {
+            "enum": [
+              "received",
+              "validating",
+              "awaiting_media",
+              "processing",
+              "indexed",
+              "rejected",
+              "failed",
+              "retracted"
+            ],
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArticleSubmissionIssueDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "externalId",
+          "version",
+          "statusUrl",
+          "status",
+          "issues"
+        ]
+      },
+      "ApiErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number"
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Validation failures list one message per violated rule."
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["statusCode", "message", "error"]
+      },
+      "ArticleMediaStatusDto": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "description": "Broadcaster media identity."
+          },
+          "status": {
+            "enum": [
+              "awaiting_upload",
+              "pending_fetch",
+              "processing",
+              "ready",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "transcodeStatus": {
+            "enum": [
+              "not_required",
+              "pending",
+              "processing",
+              "succeeded",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArticleSubmissionIssueDto"
+            }
+          }
+        },
+        "required": ["ref", "status", "transcodeStatus", "issues"]
+      },
+      "ArticleStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the article version."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Broadcaster article id."
+          },
+          "version": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "received",
+              "validating",
+              "awaiting_media",
+              "processing",
+              "indexed",
+              "rejected",
+              "failed",
+              "retracted"
+            ],
+            "type": "string"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArticleSubmissionIssueDto"
+            }
+          },
+          "media": {
+            "description": "One entry per media ref the version declares, with the current state of that media item.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArticleMediaStatusDto"
+            }
+          }
+        },
+        "required": ["id", "externalId", "version", "status", "issues", "media"]
+      },
+      "UploadPartUrlDto": {
+        "type": "object",
+        "properties": {
+          "partNumber": {
+            "type": "number"
+          },
+          "url": {
+            "type": "string",
+            "description": "Presigned URL to PUT the part bytes to."
+          }
+        },
+        "required": ["partNumber", "url"]
+      },
+      "InitiateUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "description": "Identifier of the multipart upload."
+          },
+          "partSizeBytes": {
+            "type": "number",
+            "description": "Size of every part. Every part except the last must be exactly this size."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When every URL in this response expires. Call the endpoint again for fresh URLs."
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UploadPartUrlDto"
+            }
+          }
+        },
+        "required": ["uploadId", "partSizeBytes", "expiresAt", "parts"]
+      },
+      "MediaErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number"
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ],
+            "description": "Validation failures list one message per violated rule."
+          },
+          "error": {
+            "type": "string",
+            "description": "HTTP status name."
+          }
+        },
+        "required": ["statusCode", "message", "error"]
+      },
+      "CompleteUploadRequestDto": {
+        "type": "object",
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The uploadId returned by the upload endpoint."
+          }
+        },
+        "required": ["uploadId"]
+      },
+      "CompleteUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ready"]
+          },
+          "byteSize": {
+            "type": "number",
+            "description": "Size of the assembled media in bytes."
+          }
+        },
+        "required": ["uploadId", "status", "byteSize"]
+      }
+    }
+  }
+}

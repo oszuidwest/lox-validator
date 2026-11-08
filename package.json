@@ -1,0 +1,35 @@
+{
+	"name": "lox-validator",
+	"version": "0.0.1",
+	"description": "Validate LOX v1 article submissions (JSON) against the LOX format",
+	"license": "AGPL-3.0-only",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"bun": ">=1.2.18"
+	},
+	"bin": {
+		"lox-validate": "./src/cli.ts"
+	},
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"files": [
+		"src"
+	],
+	"scripts": {
+		"validate": "bun run src/cli.ts",
+		"test": "bun test",
+		"check": "biome check . && tsc --noEmit && bun test",
+		"fix": "biome check --write ."
+	},
+	"dependencies": {
+		"ajv": "^8.20.0",
+		"ajv-formats": "^3.0.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.6.6",
+		"@types/bun": "^1.4.4",
+		"typescript": "^7.0.2"
+	}
+}

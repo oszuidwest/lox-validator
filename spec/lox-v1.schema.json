@@ -1,0 +1,678 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "DRAFT. Not approved or released: broadcaster review rounds are open.",
+  "title": "LoxV1Article",
+  "description": "A LOX v1 article submitted by a broadcaster. LOX assigns the revision on submission. Every object accepts unknown additive properties; known properties are always validated.",
+  "type": "object",
+  "required": [
+    "formatVersion",
+    "externalId",
+    "contentType",
+    "metadata",
+    "title",
+    "body",
+    "media"
+  ],
+  "properties": {
+    "formatVersion": {
+      "description": "LOX format version as major.minor. Any 1.x value is accepted by v1 consumers.",
+      "type": "string",
+      "pattern": "^1\\.(0|[1-9][0-9]{0,5})$"
+    },
+    "externalId": {
+      "description": "Broadcaster-owned identity of the logical article. Stable across submissions.",
+      "$ref": "#/$defs/identifier"
+    },
+    "loxId": {
+      "description": "LOX-assigned identity of the article.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "contentType": {
+      "description": "LOX content kind. Fixed to article; other content kinds get their own schema.",
+      "const": "article"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "title": {
+      "description": "Primary article title.",
+      "$ref": "#/$defs/shortText"
+    },
+    "summary": {
+      "description": "Plain-text article summary.",
+      "$ref": "#/$defs/longText"
+    },
+    "hero": {
+      "$ref": "#/$defs/heroMedia"
+    },
+    "body": {
+      "description": "Ordered article content. Array order is rendering order.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2000,
+      "items": {
+        "$ref": "#/$defs/block"
+      }
+    },
+    "media": {
+      "description": "Manifest of every media item referenced by hero or body. Each ref is unique within the article.",
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "$ref": "#/$defs/mediaDeclaration"
+      }
+    },
+    "extensions": {
+      "$ref": "#/$defs/extensions"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "title": "Identifier",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^\\S(?:.*\\S)?$"
+    },
+    "shortText": {
+      "title": "ShortText",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "longText": {
+      "title": "LongText",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000
+    },
+    "locale": {
+      "title": "Locale",
+      "type": "string",
+      "maxLength": 35,
+      "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$"
+    },
+    "dateTime": {
+      "title": "DateTime",
+      "description": "RFC 3339 date-time with an explicit offset.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "httpUrl": {
+      "title": "HttpUrl",
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "pattern": "^https?://"
+    },
+    "mediaRef": {
+      "title": "MediaRef",
+      "description": "Filename of the media, which is its broadcaster-owned identity across articles and submissions. Compared case-sensitively after Unicode NFC normalization. Hero and body blocks reference media by this value.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^(?!\\s)(?!.*\\s$)(?!\\.{1,2}$)[^/\\\\:\\p{Cc}]+$"
+    },
+    "metadata": {
+      "title": "Metadata",
+      "description": "Information about the article item, separate from its content.",
+      "type": "object",
+      "required": ["publicationStatus", "locale", "timestamps"],
+      "properties": {
+        "publicationStatus": {
+          "description": "Broadcaster-authored publication status. Never a LOX ingestion, storage, or indexing status.",
+          "type": "string",
+          "enum": ["draft", "published", "retracted"]
+        },
+        "locale": {
+          "description": "Article language as a BCP 47 tag.",
+          "$ref": "#/$defs/locale"
+        },
+        "timestamps": {
+          "$ref": "#/$defs/timestamps"
+        },
+        "canonicalUrl": {
+          "description": "Canonical public URL of the article at the broadcaster.",
+          "$ref": "#/$defs/httpUrl"
+        },
+        "authors": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "$ref": "#/$defs/author"
+          }
+        },
+        "classifications": {
+          "description": "Typed taxonomy terms. The dimension keeps categories, locations, dossiers, themes, topics, and tags distinct.",
+          "type": "array",
+          "maxItems": 200,
+          "items": {
+            "$ref": "#/$defs/classification"
+          }
+        },
+        "rights": {
+          "description": "Article-level rights. Applies to every media item that does not declare its own rights.",
+          "$ref": "#/$defs/rights"
+        }
+      }
+    },
+    "timestamps": {
+      "title": "Timestamps",
+      "type": "object",
+      "required": ["updatedAt"],
+      "properties": {
+        "createdAt": {
+          "description": "When the article was first created in the source system.",
+          "$ref": "#/$defs/dateTime"
+        },
+        "publishedAt": {
+          "description": "When the article was first published by the broadcaster.",
+          "$ref": "#/$defs/dateTime"
+        },
+        "updatedAt": {
+          "description": "When the article was last modified in the source system.",
+          "$ref": "#/$defs/dateTime"
+        }
+      }
+    },
+    "author": {
+      "title": "Author",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/shortText"
+        },
+        "role": {
+          "$ref": "#/$defs/shortText"
+        },
+        "affiliation": {
+          "$ref": "#/$defs/shortText"
+        },
+        "sourceId": {
+          "description": "Author identity in the source system.",
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "classification": {
+      "title": "Classification",
+      "type": "object",
+      "required": ["dimension", "label"],
+      "properties": {
+        "dimension": {
+          "type": "string",
+          "enum": ["category", "location", "dossier", "theme", "topic", "tag"]
+        },
+        "id": {
+          "description": "Source-system term identity.",
+          "$ref": "#/$defs/identifier"
+        },
+        "label": {
+          "$ref": "#/$defs/shortText"
+        }
+      }
+    },
+    "sourceReference": {
+      "title": "SourceReference",
+      "description": "An identity scoped to a named source system, such as a CMS or DAM.",
+      "type": "object",
+      "required": ["system", "id"],
+      "properties": {
+        "system": {
+          "$ref": "#/$defs/identifier"
+        },
+        "id": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "heroMedia": {
+      "title": "HeroMedia",
+      "type": "object",
+      "required": ["ref"],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/mediaRef"
+        },
+        "caption": {
+          "$ref": "#/$defs/longText"
+        }
+      }
+    },
+    "textRun": {
+      "title": "TextRun",
+      "description": "Plain text with optional marks. Non-breaking spaces are kept as U+00A0.",
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": {
+          "const": "text"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100000
+        },
+        "marks": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 7,
+          "items": {
+            "type": "string",
+            "enum": [
+              "bold",
+              "italic",
+              "underline",
+              "strikethrough",
+              "subscript",
+              "superscript",
+              "code"
+            ]
+          }
+        }
+      }
+    },
+    "link": {
+      "title": "Link",
+      "type": "object",
+      "required": ["type", "href", "children"],
+      "properties": {
+        "type": {
+          "const": "link"
+        },
+        "href": {
+          "$ref": "#/$defs/httpUrl"
+        },
+        "children": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/textRun"
+          }
+        }
+      }
+    },
+    "lineBreak": {
+      "title": "LineBreak",
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "const": "lineBreak"
+        }
+      }
+    },
+    "inline": {
+      "title": "Inline",
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/textRun"
+        },
+        {
+          "$ref": "#/$defs/link"
+        },
+        {
+          "$ref": "#/$defs/lineBreak"
+        }
+      ]
+    },
+    "richText": {
+      "title": "RichText",
+      "description": "Ordered inline content. Raw HTML is not supported.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/inline"
+      }
+    },
+    "paragraphBlock": {
+      "title": "ParagraphBlock",
+      "type": "object",
+      "required": ["type", "content"],
+      "properties": {
+        "type": {
+          "const": "paragraph"
+        },
+        "content": {
+          "$ref": "#/$defs/richText"
+        }
+      }
+    },
+    "headingBlock": {
+      "title": "HeadingBlock",
+      "type": "object",
+      "required": ["type", "level", "text"],
+      "properties": {
+        "type": {
+          "const": "heading"
+        },
+        "level": {
+          "description": "Heading level below the article title.",
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 6
+        },
+        "text": {
+          "$ref": "#/$defs/shortText"
+        }
+      }
+    },
+    "imageBlock": {
+      "title": "ImageBlock",
+      "type": "object",
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "const": "image"
+        },
+        "ref": {
+          "$ref": "#/$defs/mediaRef"
+        },
+        "caption": {
+          "$ref": "#/$defs/longText"
+        }
+      }
+    },
+    "videoBlock": {
+      "title": "VideoBlock",
+      "type": "object",
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "const": "video"
+        },
+        "ref": {
+          "$ref": "#/$defs/mediaRef"
+        },
+        "caption": {
+          "$ref": "#/$defs/longText"
+        }
+      }
+    },
+    "audioBlock": {
+      "title": "AudioBlock",
+      "type": "object",
+      "required": ["type", "ref"],
+      "properties": {
+        "type": {
+          "const": "audio"
+        },
+        "ref": {
+          "$ref": "#/$defs/mediaRef"
+        },
+        "caption": {
+          "$ref": "#/$defs/longText"
+        }
+      }
+    },
+    "listBlock": {
+      "title": "ListBlock",
+      "type": "object",
+      "required": ["type", "style", "items"],
+      "properties": {
+        "type": {
+          "const": "list"
+        },
+        "style": {
+          "type": "string",
+          "enum": ["ordered", "unordered"]
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/richText"
+          }
+        }
+      }
+    },
+    "quoteBlock": {
+      "title": "QuoteBlock",
+      "type": "object",
+      "required": ["type", "content"],
+      "properties": {
+        "type": {
+          "const": "quote"
+        },
+        "content": {
+          "$ref": "#/$defs/richText"
+        },
+        "attribution": {
+          "$ref": "#/$defs/shortText"
+        }
+      }
+    },
+    "embedBlock": {
+      "title": "EmbedBlock",
+      "description": "A reference to third-party content. Consumers decide whether and how to render it; LOX never fetches it during validation.",
+      "type": "object",
+      "required": ["type", "url"],
+      "properties": {
+        "type": {
+          "const": "embed"
+        },
+        "url": {
+          "$ref": "#/$defs/httpUrl"
+        },
+        "provider": {
+          "$ref": "#/$defs/shortText"
+        },
+        "title": {
+          "$ref": "#/$defs/shortText"
+        }
+      }
+    },
+    "block": {
+      "title": "Block",
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/paragraphBlock"
+        },
+        {
+          "$ref": "#/$defs/headingBlock"
+        },
+        {
+          "$ref": "#/$defs/imageBlock"
+        },
+        {
+          "$ref": "#/$defs/videoBlock"
+        },
+        {
+          "$ref": "#/$defs/audioBlock"
+        },
+        {
+          "$ref": "#/$defs/listBlock"
+        },
+        {
+          "$ref": "#/$defs/quoteBlock"
+        },
+        {
+          "$ref": "#/$defs/embedBlock"
+        }
+      ]
+    },
+    "md5Checksum": {
+      "title": "Md5Checksum",
+      "description": "Integrity and duplicate detection only. Not an authenticity or rights signal.",
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "const": "md5"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        }
+      }
+    },
+    "sha1Checksum": {
+      "title": "Sha1Checksum",
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "const": "sha1"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "sha256Checksum": {
+      "title": "Sha256Checksum",
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {
+          "const": "sha256"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "checksum": {
+      "title": "Checksum",
+      "description": "Algorithm-qualified lowercase hexadecimal digest of the original media bytes.",
+      "type": "object",
+      "discriminator": {
+        "propertyName": "algorithm"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/md5Checksum"
+        },
+        {
+          "$ref": "#/$defs/sha1Checksum"
+        },
+        {
+          "$ref": "#/$defs/sha256Checksum"
+        }
+      ]
+    },
+    "mediaDeclaration": {
+      "title": "MediaDeclaration",
+      "type": "object",
+      "required": ["ref", "kind", "mimeType"],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/mediaRef"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["image", "video", "audio"]
+        },
+        "mimeType": {
+          "type": "string",
+          "maxLength": 255,
+          "pattern": "^[a-z]+/[a-z0-9][a-z0-9.+-]*$"
+        },
+        "title": {
+          "$ref": "#/$defs/shortText"
+        },
+        "description": {
+          "$ref": "#/$defs/longText"
+        },
+        "credit": {
+          "description": "Display credit. Not a licence grant.",
+          "$ref": "#/$defs/shortText"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "durationSeconds": {
+          "description": "Duration of audio or video in whole seconds, as declared by the broadcaster.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 31536000
+        },
+        "byteSize": {
+          "description": "Size of the original media in bytes.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "checksum": {
+          "$ref": "#/$defs/checksum"
+        },
+        "sourceIds": {
+          "description": "Identities of this media in source systems such as a CMS or DAM. Distinct from ref.",
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/sourceReference"
+          }
+        },
+        "rights": {
+          "description": "Media-level rights. When present, they replace the article-level rights for this media item.",
+          "$ref": "#/$defs/rights"
+        }
+      }
+    },
+    "rights": {
+      "title": "Rights",
+      "description": "Absent or unknown rights never imply permission to distribute.",
+      "type": "object",
+      "properties": {
+        "distribution": {
+          "description": "Whether LOX may distribute the content. Absence is treated as unknown.",
+          "type": "string",
+          "enum": ["permitted", "restricted", "unknown"]
+        },
+        "licence": {
+          "title": "Licence",
+          "type": "object",
+          "required": ["id"],
+          "properties": {
+            "id": {
+              "description": "Licence identifier, such as an SPDX identifier or a broadcaster licence code.",
+              "$ref": "#/$defs/identifier"
+            },
+            "url": {
+              "$ref": "#/$defs/httpUrl"
+            }
+          }
+        },
+        "copyrightHolder": {
+          "$ref": "#/$defs/shortText"
+        },
+        "copyrightNotice": {
+          "description": "Display text such as a copyright credit. Not a licence grant.",
+          "$ref": "#/$defs/shortText"
+        }
+      }
+    },
+    "extensions": {
+      "title": "Extensions",
+      "description": "Namespaced source-specific data that has no LOX field. Keys are lowercase namespaces such as a broadcaster or CMS name.",
+      "type": "object",
+      "maxProperties": 50,
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+      }
+    }
+  }
+}
